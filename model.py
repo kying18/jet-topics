@@ -1,3 +1,4 @@
+from turtle import left
 import emcee
 import math
 from multiprocessing import Pool
@@ -143,13 +144,110 @@ class Model:
 
         return sampler.get_chain()
 
+    def get_kappa_extraction_domain(self, hist1, hist2):
+        decent_stats_idxs = np.where((hist1.hist_unnorm > 30) & (hist2.hist_unnorm > 30))[0]
+        left_stats_idx = decent_stats_idxs[:int(len(decent_stats_idxs) / 2)]
+        right_stats_idx = decent_stats_idxs[int(len(decent_stats_idxs) / 2):]
+
+        has_left_anchor = []
+        for ratio in [hist1.hist/hist2.hist, hist2.hist/hist1.hist]:
+            if np.mean(ratio[left_stats_idx]) < np.mean(ratio[right_stats_idx]):
+                has_left_anchor.append(True)
+            else:
+                has_left_anchor.append(False)
+
+        # one ratio must have left anchor and other have right anchor for kappa extraction to work properly
+        if sum(has_left_anchor) != 1:  # basically, true = 1 and false = 0, so if sum = 1, then worked
+            print('Failed to unambiguously identify right and left anchor points! If the data has low statistics, kappa may not be extracted properly.')
+
+        upsampled_bins = np.arange(self.data_obj.min_bin, self.data_obj.max_bin + 1 /
+                                   config.UPSAMPLE_FACTOR, 1/config.UPSAMPLE_FACTOR)  # upsample the x axis
+        nonzero_stats_idxs = np.where((hist1.hist_unnorm > 0) | (hist2.hist_unnorm > 0))[0]
+
+        left_cut_0 = np.min(nonzero_stats_idxs) * config.UPSAMPLE_FACTOR
+        right_cut_0 = np.max(nonzero_stats_idxs) * config.UPSAMPLE_FACTOR
+        left_cut_30 = np.min(decent_stats_idxs) * config.UPSAMPLE_FACTOR
+        right_cut_30 = np.max(decent_stats_idxs) * config.UPSAMPLE_FACTOR
+
+        left_bins = upsampled_bins[left_cut_0:right_cut_30+1]
+        right_bins = upsampled_bins[left_cut_30:right_cut_0+1]
+        if has_left_anchor[0]:  # hist1/hist2 has the left anchor, so we return x range for left then x range for right
+            return left_bins, right_bins
+        return right_bins, left_bins
+
     def get_kappas(self, samples):
         # randomly sample "nkappa" points from the posterior on which to extract kappa
         all_index_tuples = [(i, j) for i in range(self.burn_in, len(samples)) for j in range(len(samples[0]))]
         index_tuples = random.sample(all_index_tuples, self.nkappa)
         posterior_samples = np.array([[samples[tup[0], tup[1], i] for i in range(config.NDIM)] for tup in index_tuples])
 
-        # we want to only extract kappa where hist1 or hist2 has data
-        or_mask = (self.data_obj.sample1.hist_unnorm > 0) | (self.data_obj.sample2.hist_unnorm > 0)
+        kappas_ab, kappas_ba = np.zeros(len(posterior_samples)), np.zeros(len(posterior_samples))
+        kappas_ab_arg, kappas_ba_arg = np.zeros(len(posterior_samples)), np.zeros(len(posterior_samples))
+        bins_ab, bins_ba = self.get_kappa_extraction_domain(self.data_obj.sample1, self.data_obj.sample2)
+        ratios_ab, ratios_ba = [], []
 
-        kappa_AB, kappa_BA = np.zeros(len(posterior_samples)), np.zeros(len(posterior_samples))
+        for i in range(len(posterior_samples)):
+            sample = self.put_fits_in_order(posterior_samples[i], self.data_obj.sample1, self.data_obj.sample2)
+            params, fracs1, fracs2 = sample[:-6], sample[-6:-3], sample[-3:]
+
+            fit1 = np.concatenate((params, fracs1))
+            fit2 = np.concatenate((params, fracs2))
+
+            ratio_ab = [self.model_func(*fit1, x)/self.model_func(*fit2, x) for x in bins_ab]
+            ratio_ba = [self.model_func(*fit2, x)/self.model_func(*fit1, x) for x in bins_ba]
+            ratios_ab.append(ratio_ab)
+            ratios_ba.append(ratio_ba)
+
+            kappa_ab_arg = bins_ab[np.argmin(ratio_ab)]
+            kappa_ab = np.min(ratio_ab)
+
+            kappa_ba_arg = bins_ba[np.argmin(ratio_ba)]
+            kappa_ba = np.min(ratio_ba)
+
+            # storing kappa values and respective x values
+            kappas_ab_arg[i] = kappa_ab_arg
+            kappas_ba_arg[i] = kappa_ba_arg
+            kappas_ab[i] = kappa_ab
+            kappas_ba[i] = kappa_ba
+
+        del posterior_samples  # save some space :')
+
+        return kappas_ab_arg, kappas_ab, kappas_ba_arg, kappas_ba, bins_ab, ratios_ab, bins_ba, ratios_ba
+
+    @staticmethod
+    def calc_individ_fracs(kappa_ab, kappa_ba):
+        den = 1 - kappa_ab * kappa_ba
+        fa = (1 - kappa_ab) / den
+        fb = (kappa_ba - kappa_ab * kappa_ba) / den
+        return fa, fb
+
+    # note: this is unused in plotting, but here in case you want to take a look at the fractions
+    def calc_fracs_from_kappa(self, kappas_ab, kappas_ba):
+        kappa_ab, kappa_ab_std = np.mean(kappas_ab), np.std(kappas_ab)
+        kappa_ba, kappa_ba_std = np.mean(kappas_ba), np.std(kappas_ba)
+
+        fa, fb = self.calc_individ_fracs(kappa_ab, kappa_ba)
+
+        den_err = np.sqrt(np.square(kappa_ba_std / kappa_ba) + np.square(kappa_ba_std / kappa_ab))
+        fa_std = np.sqrt(np.square(kappa_ab_std / kappa_ab) + np.square(den_err))
+        fb_num_err = np.sqrt(np.square(kappa_ba_std) + np.square(den_err))
+        fb_std = np.sqrt(np.square(fb_num_err) + np.square(den_err))
+
+        return fa, fb, fa_std, fb_std
+
+    def calc_topics(self, kappas_ab, kappas_ba):
+        def get_topic_and_err(pa, pa_errs, pb, pb_errs, kappa, kappa_errs):
+            topic = (pa - kappa*pb)/(1-kappa)
+            topic_errs = np.sqrt((pa - pb)**2 * kappa_errs**2 + (1 - kappa)**2 *
+                                 (pa_errs**2 + kappa**2 * pb_errs**2)) / (1 - kappa)**2
+            return topic, topic_errs
+
+        kappa_ab, kappa_ab_std = np.mean(kappas_ab), np.std(kappas_ab)
+        kappa_ba, kappa_ba_std = np.mean(kappas_ba), np.std(kappas_ba)
+
+        topic1, topic1_err = get_topic_and_err(pa=self.data_obj.sample1.hist, pa_errs=self.data_obj.sample1.hist_error,
+                                               pb=self.data_obj.sample2.hist, pb_errs=self.data_obj.sample2.hist_error, kappa=kappa_ab, kappa_errs=kappa_ab_std)
+        topic2, topic2_err = get_topic_and_err(pa=self.data_obj.sample2.hist, pa_errs=self.data_obj.sample2.hist_error,
+                                               pb=self.data_obj.sample1.hist, pb_errs=self.data_obj.sample1.hist_error, kappa=kappa_ba, kappa_errs=kappa_ba_std)
+
+        return topic1, topic1_err, topic2, topic2_err

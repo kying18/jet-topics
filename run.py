@@ -63,6 +63,17 @@ def run(system, sample1, sample2, nwalkers, nsamples, burn_in, nkappa, min_bin, 
     ###################################################################################
     ## 4. Extract kappas using MCMC samples                                          ##
     ###################################################################################
+    kappas_ab_arg, kappas_ab, kappas_ba_arg, kappas_ba, bins_ab, ratios_ab, bins_ba, ratios_ba = model.get_kappas(
+        samples)
+    del samples  # delete this to limit space
+    plotter.plot_kappas(kappas_ab_arg, kappas_ab, kappas_ba_arg, kappas_ba, bins_ab, ratios_ab, bins_ba, ratios_ba)
+
+    ###################################################################################
+    ## 4. Extract fractions and topics                                               ##
+    ###################################################################################
+    # fa, fb, fa_std, fb_std = model.calc_fracs_from_kappa(kappas_ab, kappas_ba)  # you can calculate but currently not used
+    topic1, topic1_err, topic2, topic2_err = model.calc_topics(kappas_ab, kappas_ba)
+    plotter.plot_topics(topic1, topic1_err, topic2, topic2_err, color1=config.COLOR1, color2=config.COLOR2)
 
 
 if __name__ == '__main__':

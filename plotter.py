@@ -104,10 +104,59 @@ class Plotter:
         plt.savefig(f'{config.PLOT_OUTPUT_PATH}/{self.system}/{self.file_prefix}_mcmc_samples.png')
         plt.clf()
 
-    def plot_kappas(self):
-        # mask1_zeros = hist1_n>0 # used for plotting only
-        # mask2_zeros = hist2_n>0 # used for plotting only
-        # fig, (ax1,ax2) = plt.subplots(1,2, figsize=(8, 6))
-        # ax1.plot(real_bins_for_hist[mask2_zeros],hist1[mask2_zeros]/hist2[mask2_zeros],'b--')
-        # ax2.plot(real_bins_for_hist[mask1_zeros],hist2[mask1_zeros]/hist1[mask1_zeros],'b--',label='data')
-        pass
+    def plot_kappas(self, kappas_ab_arg, kappas_ab, kappas_ba_arg, kappas_ba, bins_ab, ratios_ab, bins_ba, ratios_ba):
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6), sharey=True)
+        mask1, mask2 = self.data_obj.sample1.hist_unnorm > 0, self.data_obj.sample2.hist_unnorm > 0
+        ax1.plot(self.bins_center[mask2], self.data_obj.sample1.hist[mask2] /
+                 self.data_obj.sample2.hist[mask2], 'k--')
+        ax2.plot(self.bins_center[mask1], self.data_obj.sample2.hist[mask1] /
+                 self.data_obj.sample1.hist[mask1], 'k--', label='Data')
+
+        for i in range(len(kappas_ab_arg)):
+            ax1.plot(kappas_ab_arg[i], kappas_ab[i], 'bo', alpha=0.1)
+            ax1.plot(bins_ab, ratios_ab[i], color='r', alpha=0.1)
+            if i == 0:
+                ax2.plot(kappas_ba_arg[i], kappas_ba[i], 'bo', alpha=0.1, label="Extracted kappas")
+                ax2.plot(bins_ba, ratios_ba[i], color='r', alpha=0.1, label="MCMC fits")
+            else:
+                ax2.plot(kappas_ba_arg[i], kappas_ba[i], 'bo', alpha=0.1)
+                ax2.plot(bins_ba, ratios_ba[i], color='r', alpha=0.1)
+
+        ax1.set_ylim((0, 3.5))
+        ax2.set_ylim((0, 3.5))
+        ax1.set_ylabel('Input A / Input B')
+        ax2.set_ylabel('Input B / Input A')
+        ax1.set_xlabel(self.xlabel)
+        ax2.set_xlabel(self.xlabel)
+        ax1.set_title("MCMC Fit and Extracted Kappas")
+        ax2.set_title("MCMC Fit and Extracted Kappas")
+        ax2.legend()
+        fig.suptitle('MCMC Fit and Extracted Kappas')
+        plt.savefig(f'{config.PLOT_OUTPUT_PATH}/{self.system}/{self.file_prefix}_kappas.png')
+        plt.clf()
+
+    def plot_topics(self, topic1, topic1_err, topic2, topic2_err, color1="purple", color2="green"):
+        # photon_q = self.data_obj.photon_quarks.hist
+        fig, ax = plt.subplots(figsize=(8, 6))
+
+        ax.step(self.bins_center, topic1, where='mid', color=color1, label='Topic 1')
+        ax.fill_between(self.bins[1:], topic1-topic1_err, topic1+topic1_err, step='pre', color=color1, alpha=0.3)
+        ax.step(self.bins_center, topic2, where='mid', color=color2, label='Topic 2')
+        ax.fill_between(self.bins[1:], topic2-topic2_err, topic2+topic2_err, step='pre', color=color2, alpha=0.3)
+
+        ax.plot(self.bins_center, self.data_obj.photon_quarks.hist, color='k', label=r'$\gamma$+q')
+        ax.plot(self.bins_center, self.data_obj.photon_gluons.hist,
+                color='k', linestyle='--', dashes=(6, 2), label=r'$\gamma$+g')
+
+        ax.plot(self.bins_center, self.data_obj.dijet_quarks.hist, color='k', dashes=(3, 1), label='Dijet q')
+        ax.plot(self.bins_center, self.data_obj.dijet_gluons.hist,
+                color='k', linestyle=':', dashes=(1, 1), label='Dijet g')
+
+        ax.set_xlim((self.min_bin, self.max_bin))
+        ax.set_xlabel(self.xlabel)
+        ax.set_ylabel('Probability')
+        ax.legend()
+        plt.title('Resulting Topics')
+
+        plt.savefig(f'{config.PLOT_OUTPUT_PATH}/{self.system}/{self.file_prefix}_topics.png')
+        plt.clf()
