@@ -5,12 +5,15 @@ import math
 # in case you are unfamiliar with namedtuples, I think of this as a simplified object
 # you can initialize it by calling Histogram(*args) and the name of the args are space separated in the string below
 # I use this as a tidy way to keep track of the histograms
-# let's say we have h = Histogram(hist, hist_error, etc), then we can use h.hist to get the histogram, h.hist_error to get error, etc.
+# let's say we have h = Histogram(hist_unnorm, hist_unnorm_error, etc), then we can use h.hist_unnorm to get
+# the unnormalized histogram, h.hist_unnorm_error to get unnormalized histogram error, etc.
 Histogram = namedtuple(
-    "Histogram", "hist hist_error hist_norm hist_norm_error tot_n")
+    "Histogram", "x hist_unnorm hist_unnorm_error hist hist_error tot_n")
 
 # Data object in charge of parsing the data from the data file and creating the histograms that we will use for the MCMC
 # Currently, this code caters towards photonjet/dijet inputs and quark/gluon topics
+
+
 class Data:
     def __init__(self, sample1_label='pp80_photonjet', sample2_label='pp80', data_file_path="./data/pt80100.csv", min_bin=-math.inf, max_bin=math.inf):
         self.sample1_label = sample1_label
@@ -25,13 +28,15 @@ class Data:
         samples = self.get_data()
 
         # takes the leftmost nonzero bin as min_bin, and rightmost nonzero bin as max_bin, unless user defines a larger min_bin or smaller max_bin
-        self.min_bin = max(min(np.min(np.nonzero(samples["sample1"])), np.min(
-            np.nonzero(samples["sample2"]))), min_bin)
-        self.max_bin = min(max(np.max(np.nonzero(samples["sample1"])), np.max(
-            np.nonzero(samples["sample2"]))), max_bin)
+        self.min_bin = max(min(np.min(np.nonzero(samples["sample1"])), np.min(np.nonzero(samples["sample2"]))), min_bin)
+        self.max_bin = min(max(np.max(np.nonzero(samples["sample1"])), np.max(np.nonzero(samples["sample2"]))), max_bin)
 
         self.sample1, self.sample2, self.photon_quarks, self.photon_gluons, self.dijet_quarks, self.dijet_gluons = self.format_samples(
             samples)
+
+    @staticmethod
+    def get_mean(mylist):
+        return np.array([(mylist[i]+mylist[i+1])/2 for i in range(0, len(mylist)-1)])
 
     @staticmethod
     # in case you are unfamiliar with static methods, these behave like plain functions except that you can call them from an instance or the class
@@ -83,24 +88,19 @@ class Data:
         tot_n = sum(hist)
         hist_norm = 1/tot_n * hist
         hist_norm_error = 1/tot_n * hist_error
+        bins_center = self.get_mean(range(self.min_bin, self.max_bin+1))
 
-        return Histogram(hist, hist_error, hist_norm, hist_norm_error, tot_n)
+        return Histogram(bins_center, hist, hist_error, hist_norm, hist_norm_error, tot_n)
 
     def format_samples(self, samples):
         # takes the dictionary of samples and creates normalized histogram: [[normalized histogram, normalized histogram errors, histogram of counts], total count]
         # min_bin and max_bin are indices of minimum bin and maximum bin: [min_bin, max_bin)
         # returns this list of histograms/count for sample1, sample2, combined quark, combined gluon (in that order)
-        sample1 = self.format_hist(
-            samples['sample1'], samples['sample1_error'])
-        sample2 = self.format_hist(
-            samples['sample2'], samples['sample2_error'])
-        photon_quarks = self.format_hist(
-            samples['photon_quark_truth'], samples['photon_quark_truth_error'])
-        photon_gluons = self.format_hist(
-            samples['photon_gluon_truth'], samples['photon_gluon_truth_error'])
-        dijet_quarks = self.format_hist(
-            samples['dijet_quark_truth'], samples['dijet_quark_truth_error'])
-        dijet_gluons = self.format_hist(
-            samples['dijet_gluon_truth'], samples['dijet_gluon_truth_error'])
+        sample1 = self.format_hist(samples['sample1'], samples['sample1_error'])
+        sample2 = self.format_hist(samples['sample2'], samples['sample2_error'])
+        photon_quarks = self.format_hist(samples['photon_quark_truth'], samples['photon_quark_truth_error'])
+        photon_gluons = self.format_hist(samples['photon_gluon_truth'], samples['photon_gluon_truth_error'])
+        dijet_quarks = self.format_hist(samples['dijet_quark_truth'], samples['dijet_quark_truth_error'])
+        dijet_gluons = self.format_hist(samples['dijet_gluon_truth'], samples['dijet_gluon_truth_error'])
 
         return sample1, sample2, photon_quarks, photon_gluons, dijet_quarks, dijet_gluons
