@@ -30,3 +30,39 @@ UPSAMPLE_FACTOR = 10
 
 # parallelizing MCMC variable
 N_WORKERS = 4
+
+# parameters regarding the substructure extraction
+SUBSTRUCTURES = {
+    "jet-shape": {
+        "n_bins": 6,
+        "req_string_label": "",
+        "xlabel": "r",
+        "ylabel": r"$\rho(r)$",
+        "log": True,
+        "title": "Jet Shape"
+    },
+    "jet-frag": {
+        "n_bins": 10,
+        "req_string_label": "xi",
+        "xlabel": r"$\xi$",
+        "ylabel": r"$1/N_{jet} dN_{track}/d\xi$",
+        "log": True,
+        "title": "Jet Fragmentation"
+    },
+    "jet-mass": {
+        "n_bins": 50,
+        "req_string_label": "",
+        "xlabel": "m",
+        "ylabel": r"$1/N dN/dm$",
+        "log": False,
+        "title": "Jet Mass"
+    },
+    "jet-splitting": {
+        "n_bins": 8,
+        "req_string_label": "",
+        "xlabel": r"$z_G$",
+        "ylabel": r"$1/N dN/dz_{G}$",
+        "log": False,
+        "title": "Jet Splitting Fraction"
+    }
+}

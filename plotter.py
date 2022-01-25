@@ -1,7 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import errno
+from matplotlib.collections import PatchCollection
+from matplotlib.patches import Rectangle
+from matplotlib.ticker import ScalarFormatter
 import os
+
 
 import config
 from model import Model
@@ -159,4 +163,51 @@ class Plotter:
         plt.title('Resulting Topics')
 
         plt.savefig(f'{config.PLOT_OUTPUT_PATH}/{self.system}/{self.file_prefix}_topics.png')
+        plt.clf()
+
+    def plot_substructure(self, substructure, x, quark_vals, gluon_vals, topic1_vals, topic2_vals, color1="purple", color2="green"):
+        def make_error_boxes(ax, xdata, ydata, xerror, yerror, facecolor='r',
+                             edgecolor='none', alpha=0.5):
+
+            # Loop over data points; create box from errors at each point
+            errorboxes = [Rectangle((x - xe, y - ye), 2*xe.sum(), 2*ye.sum())
+                          for x, y, xe, ye in zip(xdata, ydata, xerror.T, yerror.T)]
+
+            # Create patch collection with specified colour/alpha
+            pc = PatchCollection(errorboxes, facecolor=facecolor, alpha=alpha,
+                                 edgecolor=edgecolor)
+
+            # Add collection to axes
+            ax.add_collection(pc)
+
+        _, ax = plt.subplots(figsize=(8, 6))
+        if substructure in ["jet-mass"]:
+            ax.plot(x[:, 0], quark_vals[:, 0], color='k', label="Quark", marker='o')
+            ax.plot(x[:, 0], gluon_vals[:, 0], color='grey', label="Gluon", marker='o')
+            ax.plot(x[:, 0], topic1_vals[:, 0], color=color1, label="Topic 1", marker='o')
+            ax.plot(x[:, 0], topic2_vals[:, 0], color=color2, label="Topic 2", marker='o')
+        else:
+            ax.errorbar(x[:, 0], quark_vals[:, 0], yerr=quark_vals[:, 1],
+                        xerr=x[:, 1], fmt='o', color='k', label="Quark")
+            ax.errorbar(x[:, 0], gluon_vals[:, 0], yerr=gluon_vals[:, 1],
+                        xerr=x[:, 1], fmt='o', color='gray', label="Gluon")
+
+            ax.errorbar(x[:, 0], topic1_vals[:, 0], yerr=topic1_vals[:, 1],
+                        xerr=x[:, 1], fmt='o', color=color1, label="Topic 1")
+            ax.errorbar(x[:, 0], topic2_vals[:, 0], yerr=topic2_vals[:, 1],
+                        xerr=x[:, 1], fmt='o', color=color2, label="Topic 2")
+
+        make_error_boxes(ax, x[:, 0], quark_vals[:, 0], x[:, 1], quark_vals[:, 1], facecolor='k')
+        make_error_boxes(ax, x[:, 0], gluon_vals[:, 0], x[:, 1], gluon_vals[:, 1], facecolor='gray')
+        make_error_boxes(ax, x[:, 0], topic1_vals[:, 0], x[:, 1], topic1_vals[:, 1], facecolor=color1)
+        make_error_boxes(ax, x[:, 0], topic2_vals[:, 0], x[:, 1], topic2_vals[:, 1], facecolor=color2)
+
+        if config.SUBSTRUCTURES[substructure]["log"]:
+            ax.set_yscale('log')
+        ax.set_ylabel(config.SUBSTRUCTURES[substructure]["ylabel"])
+        ax.set_xlabel(config.SUBSTRUCTURES[substructure]["xlabel"])
+        ax.get_yaxis().set_major_formatter(ScalarFormatter())
+        plt.title(config.SUBSTRUCTURES[substructure]["title"])
+        plt.legend()
+        plt.savefig(f'{config.PLOT_OUTPUT_PATH}/{self.system}/{self.file_prefix}_{substructure}.png')
         plt.clf()

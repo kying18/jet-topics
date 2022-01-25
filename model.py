@@ -1,4 +1,4 @@
-from turtle import left
+import csv
 import emcee
 import math
 from multiprocessing import Pool
@@ -251,3 +251,85 @@ class Model:
                                                pb=self.data_obj.sample1.hist, pb_errs=self.data_obj.sample1.hist_error, kappa=kappa_ba, kappa_errs=kappa_ba_std)
 
         return topic1, topic1_err, topic2, topic2_err
+
+    def calc_substructure(self, substructure, kappa_ab_mean, kappa_ba_mean, kappa_ab_std, kappa_ba_std):
+        def get_error(rho, kappa_mean, kappa_std, val1, err1, val2, err2):
+            try:
+                kp_err = np.sqrt(np.square(kappa_std / kappa_mean) + np.square(err2 / val2))
+                num_err = np.sqrt(np.square(err1) + np.square(kp_err * abs(kappa_mean * val2)))
+                err = np.sqrt(np.square(num_err/(val1 - kappa_mean * val2)) + np.square(kappa_std / (1 - kappa_mean)))
+                return abs(err * rho)
+            except:
+                return np.nan
+
+        n_bins = config.SUBSTRUCTURES[substructure]["n_bins"]
+
+        quark_vals = np.zeros((n_bins, 2))  # y, y_err
+        gluon_vals = np.zeros((n_bins, 2))
+        dijet_vals = np.zeros((n_bins, 2))
+        photonjet_vals = np.zeros((n_bins, 2))
+        x = np.zeros((n_bins, 2))
+        n = [0, 0, 0, 0]  # quark n, gluon n, photonjet n, dijet n
+
+        with open(f'./substructure/{substructure}/export_jetpt80_trackpt0_pp.csv', 'r') as csvfile:
+            reader = csv.reader(csvfile)
+            i = 0
+            for row in reader:
+                # if 'numJets' in row[0]:
+                #     if 'PhotonJet' in row[0]:
+                #         n[2] = int(row[1])
+                #     else:
+                #         n[3] = int(row[1])
+                #     continue
+
+                if config.SUBSTRUCTURES[substructure]["req_string_label"] not in row[0]:
+                    continue
+
+                if 'PhotonJet' in row[0]:  # photonjet
+                    photonjet_vals[i] = np.array([float(row[3]), float(row[4])])
+                    i = (i + 1) % n_bins
+                    n[2] += float(row[3])
+                elif 'quark' in row[0]:
+                    # quark
+                    quark_vals[i] = np.array([float(row[3]), float(row[4])])
+                    i = (i + 1) % n_bins
+                    n[0] += float(row[3])
+                elif 'gluon' in row[0]:
+                    # gluon
+                    gluon_vals[i] = np.array([float(row[3]), float(row[4])])
+                    i = (i + 1) % n_bins
+                    n[1] += float(row[3])
+                else:  # dijet
+                    # x
+                    x[i] = np.array([float(row[1]), float(row[2])])
+                    dijet_vals[i] = np.array([float(row[3]), float(row[4])])
+                    i = (i + 1) % n_bins
+                    n[3] += float(row[3])
+
+        # perform normalizations depending on the substructure
+        if substructure in ["jet-frag"]:
+            photonjet_vals = photonjet_vals/n[2]
+            dijet_vals = dijet_vals/n[3]
+        elif substructure in ["jet-mass", "jet-splitting"]:
+            bin_width = x[0, 0] * 2
+
+            quark_vals = quark_vals/n[0]/bin_width
+            gluon_vals = gluon_vals/n[1]/bin_width
+            photonjet_vals = photonjet_vals/n[2]/bin_width
+            dijet_vals = dijet_vals/n[3]/bin_width
+
+        # calculating topic 1 and topic 2
+        topic1_vals = np.zeros((n_bins, 2))
+        topic2_vals = np.zeros((n_bins, 2))
+
+        topic1_vals[:, 0] = (photonjet_vals[:, 0] - kappa_ab_mean * dijet_vals[:, 0]) / (1 - kappa_ab_mean)
+        topic2_vals[:, 0] = (dijet_vals[:, 0] - kappa_ba_mean * photonjet_vals[:, 0]) / (1 - kappa_ba_mean)
+
+        for i in range(n_bins):
+            # error calculations
+            topic1_vals[i][1] = get_error(topic1_vals[i][0], kappa_ab_mean, kappa_ab_std,
+                                          photonjet_vals[i][0], photonjet_vals[i][1], dijet_vals[i][0], dijet_vals[i][1])
+            topic2_vals[i][1] = get_error(topic2_vals[i][0], kappa_ba_mean, kappa_ba_std,
+                                          dijet_vals[i][0], dijet_vals[i][1], photonjet_vals[i][0], photonjet_vals[i][1])
+
+        return x, quark_vals, gluon_vals, photonjet_vals, dijet_vals, topic1_vals, topic2_vals

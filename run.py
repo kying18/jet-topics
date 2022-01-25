@@ -13,13 +13,13 @@
 
 import argparse
 import math
+import csv
 import numpy as np
 
 import config
-from data import Histogram, Data
+from data import Data
 from plotter import Plotter
 from model import Model
-from multiprocessing import Pool, cpu_count
 
 
 def run(system, sample1, sample2, nwalkers, nsamples, burn_in, nkappa, min_bin, max_bin, xlabel):
@@ -68,12 +68,38 @@ def run(system, sample1, sample2, nwalkers, nsamples, burn_in, nkappa, min_bin, 
     del samples  # delete this to limit space
     plotter.plot_kappas(kappas_ab_arg, kappas_ab, kappas_ba_arg, kappas_ba, bins_ab, ratios_ab, bins_ba, ratios_ba)
 
+    # write kappas to file
+    with open(f'kappas/{plotter.file_prefix}.csv', 'w+') as f:
+        writer = csv.writer(f)
+        writer.writerows([list(kappas) for kappas in [kappas_ab, kappas_ba]])
+
     ###################################################################################
     ## 4. Extract fractions and topics                                               ##
     ###################################################################################
     # fa, fb, fa_std, fb_std = model.calc_fracs_from_kappa(kappas_ab, kappas_ba)  # you can calculate but currently not used
     topic1, topic1_err, topic2, topic2_err = model.calc_topics(kappas_ab, kappas_ba)
     plotter.plot_topics(topic1, topic1_err, topic2, topic2_err, color1=config.COLOR1, color2=config.COLOR2)
+
+    ###################################################################################
+    ## 5. Extract substructure observables                                           ##
+    ###################################################################################
+    # You can uncomment the following code and start the script here if you want to just start from a
+    # saved kappa file instead of the MCMC (you still need to initialize objects in step 1)
+
+    # with open(f'kappas/{plotter.file_prefix}.csv', 'r') as f:
+    #     csv_reader = list(csv.reader(f))
+    #     kappas_ab = [float(i) for i in csv_reader[0]]
+    #     kappas_ba = [float(i) for i in csv_reader[1]]
+
+    # kappas
+    kappa_ab_mean, kappa_ab_std = np.mean(kappas_ab), np.std(kappas_ba)
+    kappa_ba_mean, kappa_ba_std = np.mean(kappas_ab), np.std(kappas_ba)
+
+    for substructure in ["jet-shape", "jet-frag", "jet-mass", "jet-splitting"]:
+        x, quark_vals, gluon_vals, _, _, topic1_vals, topic2_vals = model.calc_substructure(
+            substructure, kappa_ab_mean, kappa_ba_mean, kappa_ab_std, kappa_ba_std)
+        plotter.plot_substructure(substructure, x, quark_vals, gluon_vals, topic1_vals,
+                                  topic2_vals, color1="purple", color2="green")
 
 
 if __name__ == '__main__':
