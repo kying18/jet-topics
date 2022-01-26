@@ -1,12 +1,15 @@
 # Jet Topic Modeling and Substructure Extraction
 
-This code is designed to use the Markov Chain Monte Carlo (MCMC) emcee to calculate jet topics in proton-proton and heavy-ion collisions. This repo in particular is a refactored and modified version of the original by Jasmine Brewer and Andrew P. Turner with conceptual oversight from Jesse Thaler, located at https://github.com/jasminebrewer/jet-topics-from-MCMC. The topics extraction procedure is based on https://arxiv.org/abs/2008.08596. The topics' jet observable substructure extraction is based on a work in progress.
+This code is designed to use the Markov Chain Monte Carlo (MCMC) emcee to calculate jet topics in proton-proton and heavy-ion collisions. This code has been modified and refactored by Kylie Ying, and is based on the original by Jasmine Brewer and Andrew P. Turner with conceptual oversight from Jesse Thaler, located at https://github.com/jasminebrewer/jet-topics-from-MCMC. The topics extraction procedure is based on https://arxiv.org/abs/2008.08596. The topics' jet observable substructure extraction is based on a work in progress.
 
 ## Code Overview
+
 This repository provides the code for the topic modeling algorithm and subsequent substructure observable extraction. The whole pipeline of data can be expressed in the following image. This repo corresponds to the pink box:
+
 ![Pipeline leading up to topic modeling algorithm](https://github.com/kying18/jet-topics/blob/main/readme-imgs/pipeline.png?raw=true)
 
 The repo is divided into three components: a `Data` object (located at `data.py`), a `Plotter` object (located at `plotter.py`), and a `Model` object (located at `model.py`). Below is a diagram representing how the components interact with one another:
+
 ![Components of this repo](https://github.com/kying18/jet-topics/blob/main/readme-imgs/model.png?raw=true)
 
 The `Data` object is responsible for data ingestion from the `{system}.csv` file, parsing the file to create `Histogram` namedtuples. These `Histograms` keep track of various numpy arrays representing the x axis, unnormalized histogram, unnormalized histogram error, normalized histogram, normalized histogram error, and total entries in the histogram (int).
