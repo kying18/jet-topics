@@ -2,11 +2,6 @@
 
 This code is designed to use the Markov Chain Monte Carlo (MCMC) emcee to calculate jet topics in proton-proton and heavy-ion collisions. This repo in particular is a refactored and modified version of the original by Jasmine Brewer and Andrew P. Turner with conceptual oversight from Jesse Thaler, located at https://github.com/jasminebrewer/jet-topics-from-MCMC. The topics extraction procedure is based on https://arxiv.org/abs/2008.08596. The topics' jet observable substructure extraction is based on a work in progress.
 
-[Code Overview](## Code Overview)
-[Data](## Samples)
-[Run the Code](## How to Run the Code)
-[Outputs](## Outputs)
-
 ## Code Overview
 This repository provides the code for the topic modeling algorithm and subsequent substructure observable extraction. The whole pipeline of data can be expressed in the following image. This repo corresponds to the pink box:
 ![Pipeline leading up to topic modeling algorithm](https://github.com/kying18/jet-topics/blob/main/readme-imgs/pipeline.png?raw=true)
@@ -27,11 +22,17 @@ The three components interact with one another to produce results in `run.py`.
 Along with the code, we also provide sample dijet and photon+jet histograms in proton-proton and heavy-ion collisions which can be used as an example to run the code. The sample histograms are provided in the `data` folder. There is currently one file `pt80100.csv`, representing the PYQUEN data between `80<pT<100 GeV`. To run the code in its current form, the csv files containing the sample histograms should be saved in the the `data` directory.
 
 For each sample, there should be 6 lines contained in the input sample in the following format:
+
 `{sample_label},0,0,1,2,4,...` (histogram values)
+
 `{sample_label}_error,0,0,1,1.41,2,...` (histogram error values)
+
 `{sample_label}_quark_truth,0,0,1,2,4,...` (quark truth histogram values)
+
 `{sample_label}_quark_truth_error,0,0,1,1.41,2,...` (quark truth histogram error values)
+
 `{sample_label}_gluon_truth,0,0,1,2,4,...` (gluon truth histogram values)
+
 `{sample_label}_gluon_truth_error,0,0,1,1.41,2,...` (gluon truth histogram error values)
 
 ## How to Run the Code
