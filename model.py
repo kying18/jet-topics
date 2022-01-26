@@ -271,16 +271,16 @@ class Model:
         x = np.zeros((n_bins, 2))
         n = [0, 0, 0, 0]  # quark n, gluon n, photonjet n, dijet n
 
-        with open(f'./substructure/{substructure}/export_jetpt80_trackpt0_pp.csv', 'r') as csvfile:
+        with open(f'./substructure/{substructure}/export_jetpt80_trackpt0_{self.data_obj.sample_type}.csv', 'r') as csvfile:
             reader = csv.reader(csvfile)
             i = 0
             for row in reader:
-                # if 'numJets' in row[0]:
-                #     if 'PhotonJet' in row[0]:
-                #         n[2] = int(row[1])
-                #     else:
-                #         n[3] = int(row[1])
-                #     continue
+                if 'numJets' in row[0]:
+                    if 'PhotonJet' in row[0]:
+                        n[2] = int(row[1])
+                    else:
+                        n[3] = int(row[1])
+                    continue
 
                 if config.SUBSTRUCTURES[substructure]["req_string_label"] not in row[0]:
                     continue
@@ -288,23 +288,23 @@ class Model:
                 if 'PhotonJet' in row[0]:  # photonjet
                     photonjet_vals[i] = np.array([float(row[3]), float(row[4])])
                     i = (i + 1) % n_bins
-                    n[2] += float(row[3])
+                    n[2] += float(row[3]) if substructure in ["jet-mass", "jet-splitting"] else 0
                 elif 'quark' in row[0]:
                     # quark
                     quark_vals[i] = np.array([float(row[3]), float(row[4])])
                     i = (i + 1) % n_bins
-                    n[0] += float(row[3])
+                    n[0] += float(row[3]) if substructure in ["jet-mass", "jet-splitting"] else 0
                 elif 'gluon' in row[0]:
                     # gluon
                     gluon_vals[i] = np.array([float(row[3]), float(row[4])])
                     i = (i + 1) % n_bins
-                    n[1] += float(row[3])
+                    n[1] += float(row[3]) if substructure in ["jet-mass", "jet-splitting"] else 0
                 else:  # dijet
                     # x
                     x[i] = np.array([float(row[1]), float(row[2])])
                     dijet_vals[i] = np.array([float(row[3]), float(row[4])])
                     i = (i + 1) % n_bins
-                    n[3] += float(row[3])
+                    n[3] += float(row[3]) if substructure in ["jet-mass", "jet-splitting"] else 0
 
         # perform normalizations depending on the substructure
         if substructure in ["jet-frag"]:

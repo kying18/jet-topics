@@ -22,8 +22,10 @@ class Data:
 
         if sample1_label[:4] == 'pbpb':
             self.sample = 'pbpb80_0_10_wide'
+            self.sample_type = 'pbpb'
         else:
             self.sample = sample1_label.split("_")[0]
+            self.sample_type = 'pp'
 
         samples = self.get_data()
 
