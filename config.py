@@ -1,5 +1,3 @@
-from multiprocessing import BoundedSemaphore
-
 # data.py variables
 DATA_FOLDER_PATH = "./data"  # folder containing data file
 
