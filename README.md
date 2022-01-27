@@ -20,6 +20,8 @@ The `Model` object is responsible for fitting the data using least squares and M
 
 The three components interact with one another to produce results in `run.py`.
 
+Different variables are located in the `config.py` file, where you can toggle parameters or adjust labels.
+
 ## Samples
 
 Along with the code, we also provide sample dijet and photon+jet histograms in proton-proton and heavy-ion collisions which can be used as an example to run the code. The sample histograms are provided in the `data` folder. There is currently one file `pt80100.csv`, representing the PYQUEN data between `80<pT<100 GeV`. To run the code in its current form, the csv files containing the sample histograms should be saved in the the `data` directory.
