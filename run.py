@@ -15,6 +15,8 @@ import argparse
 import math
 import csv
 import numpy as np
+import os
+import errno
 
 import config
 from data import Data
@@ -69,7 +71,12 @@ def run(system, sample1, sample2, nwalkers, nsamples, burn_in, nkappa, min_bin, 
     plotter.plot_kappas(kappas_ab_arg, kappas_ab, kappas_ba_arg, kappas_ba, bins_ab, ratios_ab, bins_ba, ratios_ba)
 
     # write kappas to file
-    with open(f'kappas/{plotter.file_prefix}.csv', 'w+') as f:
+    try:
+        os.makedirs("kappas")
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+    with open(f'kappas/{system}_{sample1}_{sample2}_{plotter.file_prefix}.csv', 'w+') as f:
         writer = csv.writer(f)
         writer.writerows([list(kappas) for kappas in [kappas_ab, kappas_ba]])
 

@@ -70,6 +70,10 @@ An example parameter set to get qualitative results with reasonable computationa
 
 `./run.py pt80100 pp80_photonjet pp80 100 5000 4000 1000 0 100 "Constituent Multiplicity"`
 
+or, for the heavy-ion dataset,
+
+`./run.py pt80100 pbpb80_0_10_wide_photonjet pbpb80_0_10_wide 100 5000 4000 1000 0 100 "Constituent Multiplicity"`
+
 ## Outputs
 
 The output of the code is a sequence of plots, saved in the `plots/{system}` directory, and a csv file containing the extracted values of kappa, saved in the `kappas/settings_*.csv` file.
