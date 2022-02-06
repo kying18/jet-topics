@@ -28,12 +28,13 @@ plt.rc('figure', titlesize=config.LARGE_FONT_SIZE)
 
 
 class Plotter:
-    def __init__(self, data_obj, system, nwalkers, nsamples, burn_in, xlabel, min_bin, max_bin):
+    def __init__(self, data_obj, system, sample1, sample2, nwalkers, nsamples, burn_in, xlabel, min_bin, max_bin):
         # data_obj should be Data object from data.py
 
+        self.plots_folder = f'{config.PLOT_OUTPUT_PATH}/{system}_{sample1}_{sample2}'
         # making folders for results
         try:
-            os.makedirs(f'{config.PLOT_OUTPUT_PATH}/{system}')
+            os.makedirs(self.plots_folder)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
@@ -72,7 +73,7 @@ class Plotter:
         plt.xlim((self.min_bin, self.max_bin))
         plt.title('Input Histograms (Unnormalized)')
         # this is called an fstring, it replaces the {var} with the value of `var`
-        plt.savefig(f'{config.PLOT_OUTPUT_PATH}/{self.system}/{self.file_prefix}_input_unnormalized.png')
+        plt.savefig(f'{self.plots_folder}/{self.file_prefix}_input_unnormalized.png')
         plt.clf()
 
     def plot_least_squares(self, lst_sq_fit):
@@ -96,7 +97,7 @@ class Plotter:
         plt.legend()
         plt.xlim((self.min_bin, self.max_bin))
         plt.title('Input Histograms')
-        plt.savefig(f'{config.PLOT_OUTPUT_PATH}/{self.system}/{self.file_prefix}_lstsq_fit.png')
+        plt.savefig(f'{self.plots_folder}/{self.file_prefix}_lstsq_fit.png')
         plt.clf()
 
     def plot_mcmc_samples(self, samples, ndim=18):
@@ -105,7 +106,7 @@ class Plotter:
             axes[i].plot(range(0, self.nsamples), samples[:, :, i], "k", alpha=0.1)
             axes[i].axvline(x=self.burn_in, color='blue')
         fig.suptitle('MCMC Samples')
-        plt.savefig(f'{config.PLOT_OUTPUT_PATH}/{self.system}/{self.file_prefix}_mcmc_samples.png')
+        plt.savefig(f'{self.plots_folder}/{self.file_prefix}_mcmc_samples.png')
         plt.clf()
 
     def plot_kappas(self, kappas_ab_arg, kappas_ab, kappas_ba_arg, kappas_ba, bins_ab, ratios_ab, bins_ba, ratios_ba):
@@ -136,7 +137,7 @@ class Plotter:
         ax2.set_title("MCMC Fit and Extracted Kappas")
         ax2.legend()
         fig.suptitle('MCMC Fit and Extracted Kappas')
-        plt.savefig(f'{config.PLOT_OUTPUT_PATH}/{self.system}/{self.file_prefix}_kappas.png')
+        plt.savefig(f'{self.plots_folder}/{self.file_prefix}_kappas.png')
         plt.clf()
 
     def plot_topics(self, topic1, topic1_err, topic2, topic2_err, color1="purple", color2="green"):
@@ -162,7 +163,7 @@ class Plotter:
         ax.legend()
         plt.title('Resulting Topics')
 
-        plt.savefig(f'{config.PLOT_OUTPUT_PATH}/{self.system}/{self.file_prefix}_topics.png')
+        plt.savefig(f'{self.plots_folder}/{self.file_prefix}_topics.png')
         plt.clf()
 
     def plot_substructure(self, substructure, x, quark_vals, gluon_vals, topic1_vals, topic2_vals, color1="purple", color2="green"):
@@ -209,5 +210,5 @@ class Plotter:
         ax.get_yaxis().set_major_formatter(ScalarFormatter())
         plt.title(config.SUBSTRUCTURES[substructure]["title"])
         plt.legend()
-        plt.savefig(f'{config.PLOT_OUTPUT_PATH}/{self.system}/{self.file_prefix}_{substructure}.png')
+        plt.savefig(f'{self.plots_folder}/{self.file_prefix}_{substructure}.png')
         plt.clf()
