@@ -35,7 +35,7 @@ def run(system, sample1, sample2, nwalkers, nsamples, burn_in, nkappa, min_bin, 
     # we use data_obj's min/max bins because data_obj refines the bins from the input
     min_bin, max_bin = data_obj.min_bin, data_obj.max_bin
 
-    plotter = Plotter(data_obj=data_obj, system=system, nwalkers=nwalkers, nsamples=nsamples,
+    plotter = Plotter(data_obj=data_obj, system=system, sample1=sample1, sample2=sample2, nwalkers=nwalkers, nsamples=nsamples,
                       burn_in=burn_in, xlabel=xlabel, min_bin=min_bin, max_bin=max_bin)
     plotter.plot_unnormalized_input()  # plot the unnormalized input
 
