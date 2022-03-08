@@ -1,6 +1,6 @@
 # Jet Topic Modeling and Substructure Extraction
 
-This code is designed to use the Markov Chain Monte Carlo (MCMC) emcee to calculate jet topics in proton-proton and heavy-ion collisions. This code has been modified and refactored by Kylie Ying, and is based on the original by Jasmine Brewer and Andrew P. Turner with conceptual oversight from Jesse Thaler, located at https://github.com/jasminebrewer/jet-topics-from-MCMC. The topics extraction procedure is based on https://arxiv.org/abs/2008.08596. The topics' jet observable substructure extraction is based on a work in progress.
+This code is designed to use the Markov Chain Monte Carlo (MCMC) emcee to calculate jet topics in proton-proton and heavy-ion collisions. This code has been modified, refactored, and/or developed by Kylie Ying, and is based on the original by Jasmine Brewer and Andrew P. Turner with conceptual oversight from Jesse Thaler, located at https://github.com/jasminebrewer/jet-topics-from-MCMC. The new developments include conceptual oversight from Jasmine Brewer, Yi Chen, and Yen-Jie Lee. The topics extraction procedure is based on https://arxiv.org/abs/2008.08596. The topics' jet observable substructure extraction and subsequent modification is based on a work in progress.
 
 ## Code Overview
 
@@ -22,6 +22,8 @@ The three components interact with one another to produce results in `run.py`.
 
 Different variables are located in the `config.py` file, where you can toggle parameters or adjust labels.
 
+Once the MCMC has been run and substructures obtained, one can also derive the modiciation plots by running `modification.py`.
+
 ## Samples
 
 Along with the code, we also provide sample dijet and photon+jet histograms in proton-proton and heavy-ion collisions which can be used as an example to run the code. The sample histograms are provided in the `data` folder. There is currently one file `pt80100.csv`, representing the PYQUEN data between `80<pT<100 GeV`. To run the code in its current form, the csv files containing the sample histograms should be saved in the the `data` directory.
@@ -40,7 +42,7 @@ For each sample, there should be 6 lines contained in the input sample in the fo
 
 `{sample_label}_gluon_truth_error,0,0,1,1.41,2,...` (gluon truth histogram error values)
 
-## How to Run the Code
+## How to Run the MCMC Code
 
 The syntax to run the code is
 
@@ -62,19 +64,21 @@ Parameters:
 
 `x_min`/`x_max` - absolute minimum or maximum index of the input histogram from which to ingest data (note: the code will automatically process the histogram such that we throw away unwanted 0s on either tail of the distribution... let's call these min_cut and max_cut... if x_min > min_cut or x_max < max_cut, then x_min and x_max will take priority, otherwise min_cut and max_cut will dictate the cuts)
 
+`min_pt` / `max_pt` - the pT cuts imposed on the data (mostly to align the proper dijet/photonjet substructure input)
+
 `xlabel` - string representing label of input observable (x-axis)
 
 Example parameter sets:
 
 An example parameter set to get qualitative results with reasonable computational resources is
 
-`./run.py pt80100 pp80_photonjet pp80 100 5000 4000 1000 0 100 "Constituent Multiplicity"`
+`./run.py pt80100 pp80_photonjet pp80 100 5000 4000 1000 0 100 80 100 "Constituent Multiplicity"`
 
 or, for the heavy-ion dataset,
 
-`./run.py pt80100 pbpb80_0_10_wide_photonjet pbpb80_0_10_wide 100 5000 4000 1000 0 100 "Constituent Multiplicity"`
+`./run.py pt80100 pbpb80_0_10_wide_photonjet pbpb80_0_10_wide 100 5000 4000 1000 0 100 80 100 "Constituent Multiplicity"`
 
-## Outputs
+## MCMC Outputs
 
 The output of the code is a sequence of plots, saved in the `plots/{system}` directory, and a csv file containing the extracted values of kappa, saved in the `kappas/settings_*.csv` file.
 
@@ -92,4 +96,32 @@ The output of the code is a sequence of plots, saved in the `plots/{system}` dir
 
 `kappas/settings_*.csv` - a csv file containing the kappas extracted from this run of the MCMC. Along with the input distributions, these kappas can be used to reproduce the topics plots and the jet observables plots.
 
+
+`substructure/output/*.pkl` - a pickle file containing the substructure values obtained using the topics. These will be used for the modification plots.
+
 See https://emcee.readthedocs.io/en/stable/tutorials/line/ for a valuable tutorial on fitting with MCMC.
+
+## How to Run the Modification Plotting Code
+
+The syntax to run the code is
+
+`./modification.py system pp_sample_1 pp_sample_2 hi_sample_1 hi_sample_2 nwalkers nsamples burn_in`
+
+Parameters:
+
+`system` - string representing file name of the data file, located under `data` the data folder (not including `.csv`)
+
+`pp_sample_1`/`pp_sample_2` - strings representing the labels of the proton-proton inputs (assumed to correspond to photon jet sample and dijet sample)
+
+`hi_sample_1`/`hi_sample_2` - strings representing the labels of the proton-proton inputs (assumed to correspond to photon jet sample and dijet sample)
+
+`nwalkers` - number of walkers for the MCMC (while we are not running MCMC, this is to determine which saved substructure file we should use)
+
+`nsamples` - number of samples taken by each walker in the MCMC (while we are not running MCMC, this is to determine which saved substructure file we should use)
+
+`burn_in` - number of samples after which the MCMC is thought to have converged to the posterior (while we are not running MCMC, this is to determine which saved substructure file we should use) 
+
+`nkappa` - number of samples from the posterior at which to sample kappa (it is required that `nkappa < (nsamples - burn_in) * nwalkers`)
+
+## Modification Plot Outputs
+`mod-plots/settings_*.png` - plots representing the hi/pp ratio plots for each substructure observable extracted from the topics

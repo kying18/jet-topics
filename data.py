@@ -15,10 +15,13 @@ Histogram = namedtuple(
 
 
 class Data:
-    def __init__(self, sample1_label='pp80_photonjet', sample2_label='pp80', data_file_path="./data/pt80100.csv", min_bin=-math.inf, max_bin=math.inf):
+    def __init__(self, sample1_label='pp80_photonjet', sample2_label='pp80', data_file_path="./data/pt80100.csv", min_bin=-math.inf, max_bin=math.inf, min_pt=80, max_pt=100):
         self.sample1_label = sample1_label
         self.sample2_label = sample2_label
         self.data_file_path = data_file_path
+
+        self.min_pt = min_pt
+        self.max_pt = max_pt
 
         if sample1_label[:4] == 'pbpb':
             self.sample = 'pbpb80_0_10_wide'
@@ -30,8 +33,12 @@ class Data:
         samples = self.get_data()
 
         # takes the leftmost nonzero bin as min_bin, and rightmost nonzero bin as max_bin, unless user defines a larger min_bin or smaller max_bin
-        self.min_bin = max(min(np.min(np.nonzero(samples["sample1"])), np.min(np.nonzero(samples["sample2"]))), min_bin)
-        self.max_bin = min(max(np.max(np.nonzero(samples["sample1"])), np.max(np.nonzero(samples["sample2"]))), max_bin)
+        # self.min_bin = min_bin
+        # self.max_bin = max_bin
+        self.min_bin = max(min(np.min(np.nonzero(samples["sample1"])),
+                           np.min(np.nonzero(samples["sample2"]))), min_bin)
+        self.max_bin = min(max(np.max(np.nonzero(samples["sample1"])),
+                           np.max(np.nonzero(samples["sample2"]))), max_bin)
 
         self.sample1, self.sample2, self.photon_quarks, self.photon_gluons, self.dijet_quarks, self.dijet_gluons = self.format_samples(
             samples)

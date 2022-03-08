@@ -26,6 +26,20 @@ plt.rc('legend', fontsize=config.SMALL_FONT_SIZE)
 # fontsize of the figure title
 plt.rc('figure', titlesize=config.LARGE_FONT_SIZE)
 
+def make_error_boxes(ax, xdata, ydata, xerror, yerror, facecolor='r',
+                        edgecolor='none', alpha=0.5):
+
+    # Loop over data points; create box from errors at each point
+    errorboxes = [Rectangle((x - xe, y - ye), 2*xe.sum(), 2*ye.sum())
+                    for x, y, xe, ye in zip(xdata, ydata, xerror.T, yerror.T)]
+
+    # Create patch collection with specified colour/alpha
+    pc = PatchCollection(errorboxes, facecolor=facecolor, alpha=alpha,
+                            edgecolor=edgecolor)
+
+    # Add collection to axes
+    ax.add_collection(pc)
+
 
 class Plotter:
     def __init__(self, data_obj, system, sample1, sample2, nwalkers, nsamples, burn_in, xlabel, min_bin, max_bin):
@@ -46,8 +60,7 @@ class Plotter:
         self.max_bin = max_bin
         self.xlabel = xlabel
         self.system = system
-        self.file_prefix = 'settings_'+str(nwalkers)+','+str(nsamples)+','+str(burn_in) + \
-            '_' + str(self.min_bin) + '_' + str(self.max_bin)
+        self.file_prefix = 'settings_'+str(nwalkers)+','+str(nsamples)+','+str(burn_in)
         self.data_obj = data_obj
 
         self.bins_center = self.get_mean(range(self.min_bin, self.max_bin+1))
@@ -76,7 +89,7 @@ class Plotter:
         plt.savefig(f'{self.plots_folder}/{self.file_prefix}_input_unnormalized.png')
         plt.clf()
 
-    def plot_least_squares(self, lst_sq_fit):
+    def plot_least_squares(self, lst_sq_fit,  color1="red", color2="blue"):
         params, fracs1, fracs2 = lst_sq_fit[:-6], lst_sq_fit[-6:-3], lst_sq_fit[-3:]
         result1, result2 = np.concatenate((params, fracs1)), np.concatenate((params, fracs2))
 
@@ -90,8 +103,10 @@ class Plotter:
                         self.data_obj.sample2.hist+self.data_obj.sample2.hist_error, step='pre', color='gray', alpha=0.3)
 
         # plot least squares fit
-        ax.plot(self.bins_center, [Model.model_func(*result1, x)for x in self.bins_center], 'g--', label='Fit 1')
-        ax.plot(self.bins_center, [Model.model_func(*result2, x)for x in self.bins_center], 'm--', label='Fit 2')
+        ax.plot(self.bins_center, [Model.model_func(*result1, x)
+                for x in self.bins_center], linestyle='--', label='Fit 1', color=color1)
+        ax.plot(self.bins_center, [Model.model_func(*result2, x)
+                for x in self.bins_center], linestyle='--', label='Fit 2', color=color2)
         plt.xlabel(self.xlabel)
         plt.ylabel('Probability')
         plt.legend()
@@ -167,20 +182,6 @@ class Plotter:
         plt.clf()
 
     def plot_substructure(self, substructure, x, quark_vals, gluon_vals, topic1_vals, topic2_vals, color1="purple", color2="green"):
-        def make_error_boxes(ax, xdata, ydata, xerror, yerror, facecolor='r',
-                             edgecolor='none', alpha=0.5):
-
-            # Loop over data points; create box from errors at each point
-            errorboxes = [Rectangle((x - xe, y - ye), 2*xe.sum(), 2*ye.sum())
-                          for x, y, xe, ye in zip(xdata, ydata, xerror.T, yerror.T)]
-
-            # Create patch collection with specified colour/alpha
-            pc = PatchCollection(errorboxes, facecolor=facecolor, alpha=alpha,
-                                 edgecolor=edgecolor)
-
-            # Add collection to axes
-            ax.add_collection(pc)
-
         _, ax = plt.subplots(figsize=(8, 6))
         if substructure in ["jet-mass"]:
             ax.plot(x[:, 0], quark_vals[:, 0], color='k', label="Quark", marker='o')
