@@ -130,21 +130,16 @@ Parameters:
 
 ## Citation
 Please cite:
-```@misc{https://doi.org/10.48550/arxiv.2204.00641,
-  doi = {10.48550/ARXIV.2204.00641},
-  
+```
+@misc{https://doi.org/10.48550/arxiv.2204.00641,
+  doi = {10.48550/ARXIV.2204.00641},  
   url = {https://arxiv.org/abs/2204.00641},
-  
   author = {Ying, Yueyang and Brewer, Jasmine and Chen, Yi and Lee, Yen-Jie},
-  
   keywords = {High Energy Physics - Phenomenology (hep-ph), FOS: Physical sciences, FOS: Physical sciences},
-  
   title = {Data-driven extraction of the substructure of quark and gluon jets in proton-proton and heavy-ion collisions},
-  
   publisher = {arXiv},
-  
   year = {2022},
-  
   copyright = {arXiv.org perpetual, non-exclusive license}
-}```
+}
+```
 
