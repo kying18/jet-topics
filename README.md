@@ -1,6 +1,8 @@
 # Jet Topic Modeling and Substructure Extraction
 
-This code is designed to use the Markov Chain Monte Carlo (MCMC) emcee to calculate jet topics in proton-proton and heavy-ion collisions. This code has been modified, refactored, and/or developed by Kylie Ying, and is based on the original by Jasmine Brewer and Andrew P. Turner with conceptual oversight from Jesse Thaler, located at https://github.com/jasminebrewer/jet-topics-from-MCMC. The new developments include conceptual oversight from Jasmine Brewer, Yi Chen, and Yen-Jie Lee. The topics extraction procedure is based on https://arxiv.org/abs/2008.08596. The topics' jet observable substructure extraction and subsequent modification is based on a work in progress.
+This code is designed to use the Markov Chain Monte Carlo (MCMC) emcee to calculate jet topics in proton-proton and heavy-ion collisions. It is supplementary code to https://arxiv.org/abs/2204.00641. If you use this code in part or in its entirety for scientific work, please cite https://arxiv.org/abs/2204.00641.
+
+This code has been modified, refactored, and/or developed by Kylie Ying, and is based on the original by Jasmine Brewer and Andrew P. Turner with conceptual oversight from Jesse Thaler, located at https://github.com/jasminebrewer/jet-topics-from-MCMC. The new developments include conceptual oversight from Jasmine Brewer, Yi Chen, and Yen-Jie Lee. The topics extraction procedure is based on https://arxiv.org/abs/2008.08596. The topics' jet observable substructure extraction and subsequent modification is based on a work in progress.
 
 ## Code Overview
 
